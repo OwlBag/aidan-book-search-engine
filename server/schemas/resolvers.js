@@ -8,12 +8,12 @@ const resolvers ={
     Query: {
         me: async (parent, args, context) => {
             if (context.user) {
-                const userData = await User.findOne({})
+                const userData = await User.findOne({ _id: context.user._id })
                 .select('-__v -password')
 
             return userData;
             }
-            
+
             throw new AuthenticationError('Not logged in');
         }
     },
@@ -41,8 +41,27 @@ const resolvers ={
 
             return { token, user }
         },
-        saveBook: async (parent, args) => {
+        saveBook: async (parent, args, context) => {
+            if (context.user) {
+                const updatedUser = await User.findOneAndUpdate(
+                    { _id: context.user._id },
+                    { $addToSet: { savedBooks: args } },
+                    { new: true, runValidators: true }
+                );
+                return updatedUser;
 
+            }
+        },
+        removeBook: async (parent, args, context) => {
+            if (context.user) {
+                const updatedUser = await User.findOneAndUpdate(
+                    { _id: context.user._id },
+                    { $pull: { savedBooks: args } },
+                    { new: true, runValidators: true }
+                );
+                return updatedUser;
+
+            }
         }
     }
 }
